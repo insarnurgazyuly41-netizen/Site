@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>МедиаРазбор — анализатор текстов СМИ</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#FAFAFA;--card:#FFFFFF;--tx:#1F2937;--mut:#6B7280;--line:#E5E7EB;--ac:#0F5C4D;--acs:#E3F2EE;--hl:#FEF08A;--hlt:#1F2937;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111418;--card:#1A1F26;--tx:#E5E7EB;--mut:#9CA3AF;--line:#2B323C;--ac:#4FD1B5;--acs:#16302B;--hl:#854D0E;--hlt:#FEF9C3;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111418;--card:#1A1F26;--tx:#E5E7EB;--mut:#9CA3AF;--line:#2B323C;--ac:#4FD1B5;--acs:#16302B;--hl:#854D0E;--hlt:#FEF9C3;color-scheme:dark}
+html{scroll-padding-top:70px;scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.6 Inter,Roboto,system-ui,sans-serif}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px 48px}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:20px 0}
+h1{font:600 22px/1.2 Inter,sans-serif;margin:0}
+.slogan{color:var(--mut);font-size:13px;margin:2px 0 0}
+.card{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:14px}
+.btn{font:500 14px Inter,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:8px;padding:9px 14px;cursor:pointer}
+.btn:hover{border-color:var(--ac)}
+.btn.pri{background:var(--ac);border-color:var(--ac);color:#fff;font-weight:600}
+:root[data-theme="dark"] .btn.pri{color:#06201A}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.pri{color:#06201A}}
+.btn:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.menu{position:relative}
+.drop{position:absolute;right:0;top:44px;z-index:20;background:var(--card);border:1px solid var(--line);border-radius:8px;min-width:230px;padding:4px;display:none}
+.drop.open{display:block}
+.drop button{display:block;width:100%;text-align:left;background:none;border:0;color:var(--tx);font:14px Inter,sans-serif;padding:9px 10px;border-radius:6px;cursor:pointer}
+.drop button:hover{background:var(--acs)}
+textarea{width:100%;min-height:200px;resize:vertical;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--tx);padding:14px;font:17px/1.7 Lora,'PT Serif',Georgia,serif}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between;margin-top:12px}
+.cnt{color:var(--mut);font-size:13px}
+select{font:14px Inter,sans-serif;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:8px;padding:9px}
+.spin{display:inline-block;width:13px;height:13px;border:2px solid currentColor;border-right-color:transparent;border-radius:50%;animation:r .7s linear infinite;vertical-align:-2px;margin-right:8px}
+@keyframes r{to{transform:rotate(360deg)}}
+#res{display:none}
+.layout{display:grid;grid-template-columns:200px 1fr;gap:18px;align-items:start}
+nav{position:sticky;top:12px;font-size:14px}
+nav a{display:block;color:var(--mut);text-decoration:none;padding:5px 10px;border-left:2px solid var(--line)}
+nav a:hover{color:var(--ac);border-color:var(--ac)}
+.tools{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px}
+h2{font:600 18px/1.3 Inter,sans-serif;margin:0 0 10px;color:var(--ac)}
+h3{font:600 14px Inter,sans-serif;margin:14px 0 4px}
+p{margin:0 0 8px}
+ul{margin:0 0 8px;padding-left:20px}
+.src{font:17px/1.8 Lora,'PT Serif',Georgia,serif;white-space:pre-wrap}
+mark{background:var(--acs);color:inherit;border-bottom:2px solid var(--ac);border-radius:2px;cursor:pointer;transition:background .15s}
+mark.on{background:var(--hl);color:var(--hlt)}
+.tw{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:520px;font-size:14px}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:500}
+tr.it{cursor:pointer}
+tr.it:hover,tr.it.on{background:var(--acs)}
+td q{font-family:Lora,Georgia,serif;font-size:15px}
+.tag{display:inline-block;background:var(--acs);color:var(--ac);border-radius:6px;padding:1px 8px;font-size:13px;font-weight:500}
+.hint{color:var(--mut);font-size:13px}
+@media (max-width:760px){.layout{grid-template-columns:1fr}nav{position:static;display:flex;overflow-x:auto;gap:4px;padding-bottom:6px}nav a{white-space:nowrap;border-left:0;border-bottom:2px solid var(--line)}}
+@media print{header,.inbox,nav,.tools{display:none!important}.layout{display:block}.card{break-inside:avoid;border-color:#999}body{background:#fff;color:#000}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div><h1>МедиаРазбор</h1><p class="slogan">Филологический и лингвостилистический разбор текстов СМИ</p></div>
+  <div class="menu">
+    <button class="btn" id="exBtn" aria-haspopup="true">Примеры текстов</button>
+    <div class="drop" id="drop"><button data-d="0">Новостная заметка</button><button data-d="1">Аналитическая статья</button><button data-d="2">Репортаж</button></div>
+  </div>
+</header>
+
+<section class="card inbox">
+  <textarea id="inp" placeholder="Вставьте текст статьи, новости, колонки или репортажа для анализа..." aria-label="Текст для анализа"></textarea>
+  <div class="row">
+    <span class="cnt" id="cnt">0 символов · 0 слов</span>
+    <div style="display:flex;gap:10px;flex-wrap:wrap">
+      <select id="genre" aria-label="Уточнить жанр"><option value="">Жанр: автоопределение</option><option>Новостная заметка</option><option>Аналитическая статья</option><option>Репортаж</option><option>Интервью</option><option>Фельетон/колонка</option></select>
+      <button class="btn pri" id="go">Провести анализ текста</button>
+    </div>
+  </div>
+  <p class="hint" style="margin:10px 0 0">Демо-режим: разбор строится правилами прямо в браузере. Подключение GPT-4o или Claude требует собственного сервера с ключом API.</p>
+</section>
+
+<div id="res">
+  <div class="layout">
+    <nav id="toc"></nav>
+    <div id="out">
+      <div class="tools">
+        <button class="btn" id="copy">Копировать разбор</button>
+        <button class="btn" id="pdf">Скачать в PDF</button>
+        <button class="btn" id="clr">Очистить</button>
+      </div>
+      <div id="body"></div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+const DEMOS=[
+"Правительство ввело новые меры поддержки малого бизнеса. Об этом сообщил министр экономического развития на брифинге в среду. По его словам, в рамках программы предприниматели смогут получить льготные кредиты под 5% годовых. «Мы ждём, что на сегодняшний день самые уязвимые отрасли почувствуют облегчение», — заявил министр. По данным источников в ведомстве, на программу выделят 40 млрд рублей. Заявки начнут принимать с 1 декабря.",
+"Почему мы перестали читать длинные тексты? Ответ кажется очевидным: во всём виноваты смартфоны. Но это только полправды. Не лень, а перегрузка заставляет нас листать ленту. Информации стало больше, внимания — меньше. Мы привыкли к заголовкам. Мы привыкли к скорости. Мы привыкли не думать. Беспрецедентная волна контента захлестнула читателей, и редакции вынуждены бороться за каждую секунду. Что же делать? Возможно, вернуться к тишине.",
+"Над площадью висит густой холод. Люди стоят молча: сотни, тысячи, десятки тысяч. Вот женщина в тёмном платке прижимает к груди фотографию. Вот мальчишка тянет отца за рукав. Тихо. Слишком тихо для такого скопления людей. «Мы пришли, чтобы нас услышали», — говорит пожилой мужчина и отводит глаза. Шокирующая тишина давит сильнее любого крика! К вечеру площадь опустела, но город на грани взрыва."];
+
+const $=s=>document.querySelector(s);
+const esc=s=>s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const inp=$('#inp');
+const words=t=>t.match(/[А-Яа-яЁёA-Za-z0-9-]+/g)||[];
+function count(){const t=inp.value;$('#cnt').textContent=t.length+' симв. · '+words(t).length+' сл.'}
+inp.addEventListener('input',count);
+$('#exBtn').onclick=e=>{e.stopPropagation();$('#drop').classList.toggle('open')};
+document.addEventListener('click',()=>$('#drop').classList.remove('open'));
+document.querySelectorAll('#drop button').forEach(b=>b.onclick=()=>{inp.value=DEMOS[b.dataset.d];count()});
+
+let items=[],txt='';
+function find(rx,type,func,group,cap=3){let n=0;for(const m of txt.matchAll(rx)){if(n++>=cap)break;const q=m[0].trim();if(q&&!items.some(i=>i.quote===q))items.push({type,quote:q,func,group})}}
+
+function analyze(t,gsel){
+  txt=t;items=[];
+  const sents=t.split(/(?<=[.!?…])\s+/).filter(Boolean),w=words(t),n=w.length||1;
+  const avg=(n/sents.length).toFixed(1);
+  const quotesN=(t.match(/«[^»]+»/g)||[]).length, qs=sents.filter(s=>s.trim().endsWith('?')).length, ex=sents.filter(s=>s.trim().endsWith('!')).length;
+  const verbs=w.filter(x=>/(ть|ться|ется|ются|ет|ют|ит|ят|ал|ял|ил|ла|ли|ло)$/i.test(x)&&x.length>3).length;
+  const nom=w.filter(x=>/(ние|ния|нии|ость|ции|ция)$/i.test(x)).length;
+  const pron=(t.match(/\b(мы|нам|нас|наш\S*|вы|вам|вас|ваш\S*)\b/gi)||[]);
+  let genre=gsel;
+  if(!genre){genre=/(сообщил|заявил|по словам)/i.test(t)&&sents.length<9&&avg<20?'Новостная заметка':/\bвот\b/i.test(t)&&/[—«]/.test(t)&&/\b(стоят|идут|вижу|видим|сидит)/i.test(t)?'Репортаж':qs||pron.length>1?'Аналитическая статья / колонка':'Аналитическая статья'}
+  // devices
+  find(/\S+\s*[^.!?]{0,60}\?/g,'Риторический вопрос','Вовлекает читателя в размышление, задаёт проблему.','fig',2);
+  find(/[^.!?]*\!/g,'Восклицание','Усиливает эмоциональное воздействие, выражает оценку.','fig',2);
+  find(/\S*(катастроф|беспрецедент|уникальн|шокир|скандал|чудовищн|блестящ|грандиозн|драматическ|густой|жёстк)\S*/gi,'Эпитет / оценочная лексика','Задаёт оценку событию, привлекает внимание.','fig',4);
+  find(/\S*(волна|захлестн|грозит|тонет|на грани|взрыв|давит|висит|гонка|шторм)\S*(\s\S+)?/gi,'Метафора (возможная)','Делает абстрактное образным, усиливает драматизм.','fig',4);
+  find(/(не\s[а-яё]+),?\s(а|но)\s[а-яё]+(\s[а-яё]+)?/gi,'Антитеза','Противопоставление выделяет главную мысль.','fig',2);
+  find(/\b(Мы привыкли|Мы|Вот)\s[а-яё]+(\s[а-яё]+)?/g,'Анафора / параллелизм','Ритмический повтор, закрепляет мысль и создаёт напор.','fig',3);
+  find(/\b(в рамках|на сегодняшний день|в настоящее время|принят\S* мер\S*|имеет место|в целях)\b[^.,]{0,20}/gi,'Речевой штамп (клише)','Стандартная формула: быстро считывается, придаёт тексту официальность.','lex',3);
+  find(/\d[\d\s.,]*\s?(%|процент\S*|млн|млрд|тыс\S*|рубл\S*)[^.,]{0,10}/g,'Числовые данные','Создают эффект точности и достоверности.','syn',2);
+  find(/(?:^|[.!?]\s)([^.!?\s]+(?:\s[^.!?\s]+){0,2}[.!])(?=\s)/g,'Короткая фраза (парцелляция)','Замедляет ритм, выделяет мысль.','syn',2);
+  find(/«[^»]{5,}»/g,'Прямая речь / цитата','Подтверждает информацию голосом участника, придаёт достоверность.','syn',2);
+  find(/(по (некоторым )?данным [^,.]{0,25}|как сообщается|по словам [^,.]{0,25}|источник\S* в [^,.]{0,20})/gi,'Ссылка на источник','Атрибуция; при неназванном источнике снижает проверяемость.','man',3);
+  find(/(очевидно|всем известно|как известно|разумеется|все понимают|ясно, что)[^.,]{0,25}/gi,'Апелляция к «очевидности»','Навязывает оценку как общепринятую.','man',2);
+  items.forEach(i=>{i.quote=i.quote.replace(/^[.!?]\s*/,'')});
+  const by=g=>items.filter(i=>i.group===g);
+  const li=a=>a.length?'<ul>'+a.map(i=>'<li>'+esc(i.type)+': «'+esc(i.quote)+'»</li>').join('')+'</ul>':'<p class="hint">Ярких примеров не найдено.</p>';
+  const sub=genre.startsWith('Новост')?'информационный':(ex||t.match(/[«»—]/)&&/(стоят|вот|тихо)/i.test(t))?'художественно-публицистический':'аналитический';
+  const ev=by('fig').filter(i=>/Эпитет|Метафора|Восклиц/.test(i.type)).length;
+  const tone=ev>2||ex?'экспрессивная, с выраженной оценочностью':ev?'умеренно оценочная':'нейтральная, объективная';
+  const clich=by('lex').length;
+  const goal=sub==='информационный'?'информирование':sub==='аналитический'?'убеждение и объяснение':'эмоциональное воздействие';
+  const lead=sents[0]||'';
+  const S=[];
+  S.push(['passport','Паспорт текста','<h3>Жанр</h3><p>'+esc(genre)+(gsel?' (указан пользователем)':' (определён автоматически)')+'</p><h3>Тема и идея</h3><p>Ключевые слова: '+esc([...new Set(w.filter(x=>x.length>6).map(x=>x.toLowerCase()))].slice(0,5).join(', ')||'—')+'. Проблематика выводится из повторяющихся значимых слов; точную формулировку даёт подключённая языковая модель.</p><h3>Адресат и цель</h3><p>Массовая аудитория. Коммуникативная цель: '+goal+'.</p>']);
+  S.push(['comp','Композиция и структура','<h3>Заголовок и зачин</h3><p>Зачин: «'+esc(lead.slice(0,110))+(lead.length>110?'…':'')+'». '+(lead.trim().endsWith('?')?'Начало с вопроса сразу вовлекает читателя.':lead.length<70?'Короткий зачин быстро сообщает главное.':'Развёрнутый зачин вводит в контекст.')+'</p><h3>Основная часть и вывод</h3><p>Текст состоит из '+sents.length+' предложений. Заключительное: «'+esc((sents[sents.length-1]||'').slice(0,100))+'».</p>']);
+  S.push(['style','Стилистические особенности','<h3>Подстиль</h3><p>'+sub+'</p><h3>Тональность и позиция</h3><p>'+tone+'. Восклицаний: '+ex+', вопросов: '+qs+'.</p><h3>Стандарт и экспрессия</h3><p>Клише: '+clich+', образных и оценочных средств: '+ev+'. '+(clich>ev?'Преобладает стандарт.':ev>clich?'Преобладает экспрессия.':'Стандарт и экспрессия уравновешены.')+'</p>']);
+  S.push(['ling','Лингвостилистический анализ','<h3>Лексика</h3>'+li(by('lex').concat(items.filter(i=>/Эпитет/.test(i.type))))+'<h3>Морфология</h3><p>Глаголов (≈): '+Math.round(verbs/n*100)+'%, отглагольных существительных (≈): '+Math.round(nom/n*100)+'%. '+(verbs/n>.2?'Глагольность придаёт динамику.':'Именной склад характерен для официальной подачи.')+' Местоимения «мы/вы»: '+pron.length+(pron.length?' — сближение с читателем.':'.')+'</p><h3>Синтаксис</h3><p>Средняя длина предложения: '+avg+' слов. Цитат и прямой речи: '+quotesN+'. '+(avg<12?'Преобладают короткие предложения.':avg>20?'Длинные периоды для аргументации.':'Средняя длина типична для СМИ.')+'</p>'+li(by('syn'))]);
+  const fg=items.filter(i=>i.group==='fig'||i.group==='syn'||i.group==='lex');
+  S.push(['fig','Изобразительно-выразительные средства','<p class="hint">Наведите на строку — цитата подсветится в тексте.</p>'+(fg.length?'<div class="tw"><table><tr><th>Приём</th><th>Цитата</th><th>Функция</th></tr>'+fg.map(i=>'<tr class="it" data-i="'+items.indexOf(i)+'"><td><span class="tag">'+esc(i.type)+'</span></td><td><q>'+esc(i.quote)+'</q></td><td>'+esc(i.func)+'</td></tr>').join('')+'</table></div>':'<p>Выразительных средств не обнаружено.</p>')]);
+  const mn=by('man');
+  S.push(['manip','Маркеры манипуляции и воздействия',mn.length?'<div class="tw"><table><tr><th>Маркер</th><th>Цитата</th><th>Комментарий</th></tr>'+mn.map(i=>'<tr class="it" data-i="'+items.indexOf(i)+'"><td><span class="tag">'+esc(i.type)+'</span></td><td><q>'+esc(i.quote)+'</q></td><td>'+esc(i.func)+'</td></tr>').join('')+'</table></div>':'<p>Явных маркеров манипуляции не найдено.</p>']);
+  S.push(['sum','Итоговый вывод','<p>Текст выдержан в подстиле «'+sub+'». Тональность: '+tone+'. '+(ev+clich>3?'Автор сочетает стандарт и экспрессию, что соответствует закону языка СМИ.':'Языковых средств немного, подача сдержанная.')+' Выбранные средства '+(sub==='информационный'?'обеспечивают ясность и достоверность.':'усиливают воздействие на читателя.')+'</p><p class="hint">Это эвристический разбор. Глубину и точность даёт LLM.</p>']);
+  return S;
+}
+
+function render(S,t){
+  $('#toc').innerHTML='<a href="#src">Исходный текст</a>'+S.map((s,i)=>'<a href="#'+s[0]+'">'+(i+1)+'. '+s[1]+'</a>').join('');
+  let pos=[];items.forEach((it,i)=>{const k=t.indexOf(it.quote);if(k>-1)pos.push([k,k+it.quote.length,i])});
+  pos.sort((a,b)=>a[0]-b[0]);let h='',c=0;
+  pos=pos.filter(p=>{if(p[0]<c)return false;c=p[1];return true});c=0;
+  pos.forEach(p=>{h+=esc(t.slice(c,p[0]))+'<mark data-i="'+p[2]+'">'+esc(t.slice(p[0],p[1]))+'</mark>';c=p[1]});h+=esc(t.slice(c));
+  $('#body').innerHTML='<section class="card" id="src"><h2>Исходный текст</h2><div class="src">'+h+'</div></section>'+S.map((s,i)=>'<section class="card" id="'+s[0]+'"><h2>'+(i+1)+'. '+s[1]+'</h2>'+s[2]+'</section>').join('');
+  const on=(i,v)=>document.querySelectorAll('[data-i="'+i+'"]').forEach(e=>e.classList.toggle('on',v));
+  document.querySelectorAll('#body [data-i]').forEach(e=>{
+    e.onmouseenter=()=>on(e.dataset.i,true);e.onmouseleave=()=>on(e.dataset.i,false);
+    e.onclick=()=>{if(e.tagName==='MARK'){const r=document.querySelector('tr[data-i="'+e.dataset.i+'"]');if(r)r.scrollIntoView({block:'center'})}else{const m=document.querySelector('mark[data-i="'+e.dataset.i+'"]');if(m)m.scrollIntoView({block:'center'})}}});
+}
+
+$('#go').onclick=()=>{
+  const t=inp.value.trim();
+  if(words(t).length<15){alert('Нужен текст не короче 15 слов.');return}
+  const b=$('#go');b.disabled=true;b.innerHTML='<span class="spin"></span>Анализирую…';
+  setTimeout(()=>{render(analyze(t,$('#genre').value),t);$('#res').style.display='block';b.disabled=false;b.textContent='Провести анализ текста';$('#res').scrollIntoView()},900);
+};
+$('#clr').onclick=()=>{$('#res').style.display='none';inp.value='';count();scrollTo(0,0)};
+$('#pdf').onclick=()=>{try{window.print()}catch(e){alert('Печать недоступна. Откройте страницу в новой вкладке.')}};
+$('#copy').onclick=async()=>{const s=[...document.querySelectorAll('#body section')].slice(1).map(x=>x.innerText).join('\n\n');
+  try{await navigator.clipboard.writeText(s);$('#copy').textContent='Скопировано'}catch(e){const r=document.createRange();r.selectNodeContents($('#body'));getSelection().removeAllRanges();getSelection().addRange(r);$('#copy').textContent='Выделено, нажмите «Копировать»'}
+  setTimeout(()=>$('#copy').textContent='Копировать разбор',1800)};
+count();
+</script>
+</body>
+</html>
